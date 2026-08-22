@@ -3,33 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>초4 영단어 마스터 (100단어)</title>
+    <title>초4 영단어 마스터 (레벨 & 오답노트)</title>
     <style>
         body { 
-            font-family: 'Malgun Gothic', sans-serif; 
-            background-color: #f0f8ff; 
+            font-family: 'Malgun Gothic', sans-serif; background-color: #f0f8ff; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; 
+            min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
         }
         
-        h2 { color: #333; margin-bottom: 5px; }
-        .progress { color: #666; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+        h2 { color: #333; margin-bottom: 5px; text-align: center; }
+        .subtitle { color: #666; margin-bottom: 25px; text-align: center; }
 
-        /* 단어 카드 스타일 */
-        .card-container { 
-            width: 85%; max-width: 450px; height: 350px; 
-            perspective: 1000px; margin-bottom: 25px; cursor: pointer; 
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; }
+        .screen.active { display: flex; }
+
+        /* 메인 메뉴 화면 */
+        .menu-btn {
+            width: 100%; padding: 20px; font-size: 1.3rem; margin-bottom: 12px; border: none; 
+            border-radius: 20px; color: white; cursor: pointer; font-weight: bold; 
+            box-shadow: 0 6px 10px rgba(0,0,0,0.1); transition: transform 0.1s;
         }
-        .card { 
-            width: 100%; height: 100%; position: relative; 
-            transition: transform 0.6s; transform-style: preserve-3d; 
+        .menu-btn:active { transform: scale(0.95); }
+        .btn-learn-mode { background-color: #4ecdc4; }
+        .btn-quiz-mode { background-color: #ff9f43; }
+        .btn-history-mode { background-color: #a29bfe; }
+        .btn-wrong-mode { background-color: #ff7675; } /* 오답노트 버튼 색상 */
+
+        /* 상단 레벨 요약 (메인 메뉴용) */
+        .mini-profile {
+            width: 100%; background-color: white; border-radius: 20px; padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center;
         }
+        .mini-profile-title { font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 10px; }
+
+        /* 단계 선택 화면 */
+        .stage-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+        .stage-btn {
+            padding: 15px 10px; font-size: 1.1rem; color: white; border: none; border-radius: 15px; 
+            cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.1s;
+        }
+        .stage-btn:active { transform: scale(0.95); }
+        .stage-btn.learn-color { background-color: #4ecdc4; }
+        .stage-btn.quiz-color { background-color: #ff9f43; }
+
+        /* 학습 화면 (플래시카드) */
+        .progress-text { color: #666; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+
+        .card-container { width: 100%; height: 350px; perspective: 1000px; margin-bottom: 25px; cursor: pointer; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s; transform-style: preserve-3d; }
         .card.is-flipped { transform: rotateY(180deg); }
         
         .card-face { 
-            position: absolute; width: 100%; height: 100%; 
-            backface-visibility: hidden; border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; 
+            border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             text-align: center; padding: 20px; box-sizing: border-box; 
         }
@@ -37,53 +63,93 @@
         .card-front { background-color: #ffffff; }
         .card-back { background-color: #ffe4e1; transform: rotateY(180deg); }
         
-        .word-img {
-            width: 80%; height: 120px;
-            border-radius: 15px; margin-bottom: 15px;
-            object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
+        .word-img { width: 80%; height: 120px; border-radius: 15px; margin-bottom: 15px; object-fit: cover; }
         .word { font-size: 3.5rem; font-weight: bold; margin-bottom: 5px; color: #ff6b6b; }
         .meaning { font-size: 3rem; font-weight: bold; margin-bottom: 15px; color: #4ecdc4; }
         .example { font-size: 1.3rem; color: #555; word-break: keep-all; line-height: 1.4; }
         
+        /* 퀴즈 화면 */
+        .quiz-word-box {
+            width: 100%; background-color: white; border-radius: 20px; padding: 40px 20px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .quiz-word { font-size: 3.5rem; font-weight: bold; color: #ff6b6b; margin-bottom: 10px; }
+        
+        .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .quiz-option-btn {
+            padding: 20px 10px; font-size: 1.2rem; background-color: #ffffff; color: #333;
+            border: 3px solid #eee; border-radius: 15px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; word-break: keep-all;
+        }
+        .quiz-option-btn:active { transform: scale(0.95); }
+        .quiz-option-btn.correct { background-color: #20bf6b; color: white; border-color: #20bf6b; }
+        .quiz-option-btn.wrong { background-color: #ff6b6b; color: white; border-color: #ff6b6b; }
+
+        /* 학습 이력 및 레벨 화면 */
+        .history-box { width: 100%; background-color: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .history-item { background-color: #f9f9f9; border-radius: 10px; padding: 15px; margin-bottom: 10px; border-left: 5px solid #a29bfe; font-size: 1.1rem; }
+        .history-item strong { color: #333; }
+        .history-item span { color: #666; float: right; font-size: 1rem; margin-top: 2px;}
+
+        /* 경험치(EXP) 바 스타일 */
+        .exp-container { width: 100%; background-color: #eee; border-radius: 10px; height: 25px; margin: 15px 0; overflow: hidden; position: relative;}
+        .exp-bar { height: 100%; background-color: #fdcb6e; transition: width 0.5s ease-out; }
+        .exp-text { position: absolute; width: 100%; text-align: center; top: 2px; font-size: 0.9rem; font-weight: bold; color: #333; }
+        .level-title { font-size: 1.5rem; font-weight: bold; color: #ff9f43; text-align: center; margin-bottom: 5px;}
+
+        /* 공통 버튼 */
         .controls { display: flex; gap: 15px; margin-bottom: 15px; }
-        .master-controls { display: flex; gap: 15px; }
+        .btn { border: none; border-radius: 15px; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-nav { padding: 15px 25px; font-size: 1.2rem; background-color: #a5b1c2; }
+        .btn-know { padding: 15px 25px; background-color: #20bf6b; width: 220px; font-size: 1.1rem; margin-bottom: 15px;}
+        .btn-home { padding: 12px 20px; background-color: #576574; font-size: 1.1rem; margin-top: 20px; width: 100%;}
+        .audio-btn { padding: 10px 20px; background-color: #ff9f43; font-size: 1.1rem; border-radius: 20px; margin-top: 10px; border: none; color: white; font-weight: bold; cursor: pointer;}
         
-        button { 
-            padding: 15px 25px; font-size: 1.2rem; border: none; border-radius: 15px; 
-            color: white; cursor: pointer; font-weight: bold; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
-        }
-        button:active { transform: translateY(2px); box-shadow: none; }
-        
-        .btn-nav { background-color: #a5b1c2; }
-        .btn-know { background-color: #20bf6b; width: 240px; font-size: 1.1rem;}
-        
-        .audio-btn { 
-            margin-top: 10px; padding: 10px 20px; 
-            background-color: #ff9f43; font-size: 1.1rem; border-radius: 20px; 
-        }
-        
-        #success-message {
-            display: none; flex-direction: column; align-items: center; text-align: center;
-        }
-        #success-message h1 { color: #ff6b6b; font-size: 3rem; margin-bottom: 10px; }
-        .btn-restart { background-color: #4ecdc4; margin-top: 20px; }
+        /* 결과 화면 */
+        #result-message h1 { color: #ff6b6b; font-size: 2.5rem; margin-bottom: 10px; }
+        .score-text { font-size: 1.5rem; font-weight: bold; color: #4ecdc4; margin: 15px 0; text-align: center;}
     </style>
 </head>
 <body>
 
-    <div id="app-container" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-        <h2>도전! 영단어 100개 마스터 🚀</h2>
-        <div class="progress" id="progress-text">남은 단어: 100개</div>
+    <!-- 1. 메인 메뉴 화면 -->
+    <div id="main-menu" class="screen active">
+        <h1 style="font-size: 2.5rem; color: #333; margin-bottom: 5px;">초4 영단어</h1>
+        
+        <!-- 미니 프로필 (레벨 요약) -->
+        <div class="mini-profile" id="mini-profile">
+            <div class="mini-profile-title" id="mini-level-title">Lv.1 영단어 새싹 🌱</div>
+            <div class="exp-container">
+                <div class="exp-bar" id="mini-exp-bar" style="width: 0%;"></div>
+                <div class="exp-text" id="mini-exp-text">0 / 100 EXP</div>
+            </div>
+        </div>
+
+        <button class="menu-btn btn-learn-mode" onclick="openStageSelection('learn')">📖 단어 학습하기</button>
+        <button class="menu-btn btn-quiz-mode" onclick="openStageSelection('quiz')">🎮 단어 퀴즈풀기</button>
+        <button class="menu-btn btn-wrong-mode" onclick="startWrongWordsMode()">📝 내 오답노트 복습</button>
+        <button class="menu-btn btn-history-mode" onclick="showHistoryScreen()">📊 학습 이력 및 레벨</button>
+    </div>
+
+    <!-- 2. 단계 선택 화면 -->
+    <div id="stage-selection" class="screen">
+        <h2 id="stage-screen-title">단계 선택 🚀</h2>
+        <p class="subtitle">1~11단계는 엑셀 필수 단어입니다.</p>
+        <div class="stage-grid" id="stage-grid"></div>
+        <button class="btn btn-home" onclick="goHome()">◀ 메인 메뉴로</button>
+    </div>
+
+    <!-- 3. 학습 & 오답노트 공용 화면 -->
+    <div id="learn-container" class="screen">
+        <h2 id="learn-stage-title">학습 단계</h2>
+        <div class="progress-text" id="learn-progress">남은 단어: 10개</div>
         
         <div class="card-container" id="flashcard">
             <div class="card" id="card-inner">
                 <div class="card-face card-front">
                     <img id="word-image" class="word-img" src="" alt="word image">
                     <div class="word" id="en-word">Loading...</div>
-                    <button class="audio-btn" id="audio-btn" onclick="playAudio(event)">🔊 원어민 발음</button>
+                    <button class="audio-btn" onclick="playAudio('learn')">🔊 원어민 발음</button>
                     <p style="font-size: 0.9rem; color: #aaa; margin-top: 15px;">(카드를 터치하면 뜻이 나와요!)</p>
                 </div>
                 
@@ -95,133 +161,96 @@
         </div>
 
         <div class="controls">
-            <button class="btn-nav" onclick="prevWord()">◀ 이전</button>
-            <button class="btn-nav" onclick="nextWord()">다음 ▶</button>
+            <button class="btn btn-nav" onclick="prevWord()">◀ 이전</button>
+            <button class="btn btn-nav" onclick="nextWord()">다음 ▶</button>
         </div>
-        <div class="master-controls">
-            <button class="btn-know" onclick="markAsKnown()">✅ 이 단어는 다 외웠어요!</button>
-        </div>
+        <button class="btn btn-know" onclick="markAsKnown()">✅ 이 단어는 다 외웠어요!</button>
+        <button class="btn btn-home" onclick="goHome()">🏠 메뉴로 돌아가기</button>
     </div>
 
-    <div id="success-message">
-        <h1>🎉 위대한 도전을 마쳤습니다! 🎉</h1>
-        <p style="font-size: 1.5rem; color: #555;">초등학교 4학년 필수 영단어 100개를<br>모두 외웠습니다. 정말 대단해요!</p>
-        <button class="btn-restart" onclick="location.reload()">처음부터 다시 복습하기 🔄</button>
+    <!-- 4. 퀴즈 화면 -->
+    <div id="quiz-container" class="screen">
+        <h2 id="quiz-stage-title">퀴즈 단계</h2>
+        <div class="progress-text" id="quiz-progress">문제: 1 / 10</div>
+        
+        <div class="quiz-word-box">
+            <div class="quiz-word" id="quiz-en-word">Word</div>
+            <button class="audio-btn" onclick="playAudio('quiz')">🔊 듣기</button>
+        </div>
+
+        <div class="quiz-options-grid" id="quiz-options"></div>
+        <button class="btn btn-home" onclick="goHome()">🏠 메뉴로 돌아가기</button>
+    </div>
+
+    <!-- 5. 학습 이력 및 레벨 화면 -->
+    <div id="history-container" class="screen">
+        <h2>📊 나의 학습 이력</h2>
+        
+        <!-- 레벨 상세 표시 -->
+        <div class="history-box">
+            <div class="level-title" id="full-level-title">Lv.1 영단어 새싹 🌱</div>
+            <div class="exp-container">
+                <div class="exp-bar" id="full-exp-bar" style="width: 0%;"></div>
+                <div class="exp-text" id="full-exp-text">0 / 100 EXP</div>
+            </div>
+            <p style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 10px;">(단어를 외우거나 퀴즈를 맞히면 경험치가 올라요!)</p>
+        </div>
+
+        <div class="history-box" id="history-list"></div>
+        <button class="btn btn-home" onclick="goHome()">◀ 메인 메뉴로</button>
+    </div>
+
+    <!-- 6. 결과 화면 -->
+    <div id="result-message" class="screen">
+        <h1 id="result-title">🎉 완료! 🎉</h1>
+        <p id="result-desc" style="font-size: 1.2rem; color: #555;">수고하셨습니다!</p>
+        <div id="result-score" class="score-text"></div>
+        <button class="btn btn-nav" style="margin-top: 20px; width: 100%;" onclick="goHome()">메인 메뉴로 🚀</button>
     </div>
 
     <script>
+        // ✅ 전체 단어 데이터 175개
         const allWords = [
-            { en: "Family", ko: "가족", ex: "I love my family." },
-            { en: "Mother", ko: "어머니", ex: "My mother is kind." },
-            { en: "Father", ko: "아버지", ex: "My father is tall." },
-            { en: "Brother", ko: "남자 형제", ex: "He is my brother." },
-            { en: "Sister", ko: "여자 형제", ex: "She is my sister." },
-            { en: "Baby", ko: "아기", ex: "The baby is sleeping." },
-            { en: "Friend", ko: "친구", ex: "He is my best friend." },
-            { en: "Teacher", ko: "선생님", ex: "Listen to the teacher." },
-            { en: "Student", ko: "학생", ex: "I am a student." },
-            { en: "Boy", ko: "소년", ex: "The boy is playing." },
-            { en: "Girl", ko: "소녀", ex: "The girl is singing." },
-            { en: "Head", ko: "머리", ex: "Touch your head." },
-            { en: "Hair", ko: "머리카락", ex: "She has long hair." },
-            { en: "Eye", ko: "눈", ex: "Open your eyes." },
-            { en: "Ear", ko: "귀", ex: "I have two ears." },
-            { en: "Nose", ko: "코", ex: "This is my nose." },
-            { en: "Mouth", ko: "입", ex: "Open your mouth." },
-            { en: "Face", ko: "얼굴", ex: "Wash your face." },
-            { en: "Hand", ko: "손", ex: "Wash your hands." },
-            { en: "Leg", ko: "다리", ex: "My legs are long." },
-            { en: "Foot", ko: "발", ex: "Stamp your feet." },
-            { en: "School", ko: "학교", ex: "I go to school." },
-            { en: "Class", ko: "수업, 반", ex: "Welcome to my class." },
-            { en: "Book", ko: "책", ex: "Read a book." },
-            { en: "Pencil", ko: "연필", ex: "I have a pencil." },
-            { en: "Eraser", ko: "지우개", ex: "Can I borrow your eraser?" },
-            { en: "Bag", ko: "가방", ex: "Put it in your bag." },
-            { en: "Desk", ko: "책상", ex: "Sit at your desk." },
-            { en: "Chair", ko: "의자", ex: "Sit on the chair." },
-            { en: "Clock", ko: "시계", ex: "Look at the clock." },
-            { en: "Window", ko: "창문", ex: "Open the window, please." },
-            { en: "Door", ko: "문", ex: "Close the door." },
-            { en: "Dog", ko: "개", ex: "The dog is barking." },
-            { en: "Cat", ko: "고양이", ex: "The cat is cute." },
-            { en: "Bird", ko: "새", ex: "The bird is flying." },
-            { en: "Fish", ko: "물고기", ex: "The fish is swimming." },
-            { en: "Bear", ko: "곰", ex: "The bear is big." },
-            { en: "Lion", ko: "사자", ex: "The lion is strong." },
-            { en: "Tiger", ko: "호랑이", ex: "The tiger is fast." },
-            { en: "Monkey", ko: "원숭이", ex: "The monkey likes bananas." },
-            { en: "Elephant", ko: "코끼리", ex: "The elephant has a long nose." },
-            { en: "Pig", ko: "돼지", ex: "The pig is eating." },
-            { en: "Water", ko: "물", ex: "Drink some water." },
-            { en: "Milk", ko: "우유", ex: "I drink milk every day." },
-            { en: "Juice", ko: "주스", ex: "I like orange juice." },
-            { en: "Bread", ko: "빵", ex: "I eat bread for breakfast." },
-            { en: "Apple", ko: "사과", ex: "I have a red apple." },
-            { en: "Banana", ko: "바나나", ex: "Monkeys like bananas." },
-            { en: "Grape", ko: "포도", ex: "These grapes are sweet." },
-            { en: "Strawberry", ko: "딸기", ex: "I love strawberries." },
-            { en: "Meat", ko: "고기", ex: "Do you like meat?" },
-            { en: "Cheese", ko: "치즈", ex: "Mice like cheese." },
-            { en: "Cake", ko: "케이크", ex: "Happy birthday! Here is a cake." },
-            { en: "Red", ko: "빨간색", ex: "An apple is red." },
-            { en: "Blue", ko: "파란색", ex: "The sky is blue." },
-            { en: "Yellow", ko: "노란색", ex: "A banana is yellow." },
-            { en: "Green", ko: "초록색", ex: "The tree is green." },
-            { en: "Black", ko: "검은색", ex: "My hair is black." },
-            { en: "White", ko: "하얀색", ex: "Snow is white." },
-            { en: "Pink", ko: "분홍색", ex: "She wears a pink dress." },
-            { en: "Sun", ko: "태양, 해", ex: "The sun is hot." },
-            { en: "Moon", ko: "달", ex: "Look at the moon." },
-            { en: "Star", ko: "별", ex: "I see a star." },
-            { en: "Sky", ko: "하늘", ex: "The sky is clear." },
-            { en: "Rain", ko: "비", ex: "It is raining." },
-            { en: "Snow", ko: "눈", ex: "It is snowing." },
-            { en: "Tree", ko: "나무", ex: "That is a tall tree." },
-            { en: "Flower", ko: "꽃", ex: "This flower is beautiful." },
-            { en: "Sea", ko: "바다", ex: "Let's go to the sea." },
-            { en: "Mountain", ko: "산", ex: "The mountain is high." },
-            { en: "Today", ko: "오늘", ex: "Today is Monday." },
-            { en: "Tomorrow", ko: "내일", ex: "See you tomorrow." },
-            { en: "Morning", ko: "아침", ex: "Good morning!" },
-            { en: "Night", ko: "밤", ex: "Good night!" },
-            { en: "Go", ko: "가다", ex: "Let's go home." },
-            { en: "Come", ko: "오다", ex: "Come here, please." },
-            { en: "Run", ko: "달리다", ex: "I can run fast." },
-            { en: "Walk", ko: "걷다", ex: "Let's walk together." },
-            { en: "Jump", ko: "점프하다", ex: "Jump up high." },
-            { en: "Sit", ko: "앉다", ex: "Sit down, please." },
-            { en: "Stand", ko: "서다", ex: "Stand up, please." },
-            { en: "Eat", ko: "먹다", ex: "I want to eat pizza." },
-            { en: "Drink", ko: "마시다", ex: "Drink your milk." },
-            { en: "Sleep", ko: "자다", ex: "It's time to sleep." },
-            { en: "Play", ko: "놀다, 경기하다", ex: "Let's play a game." },
-            { en: "Study", ko: "공부하다", ex: "I study English." },
-            { en: "Read", ko: "읽다", ex: "Read this book." },
-            { en: "Write", ko: "쓰다", ex: "Write your name." },
-            { en: "Listen", ko: "듣다", ex: "Listen to the music." },
-            { en: "See", ko: "보다", ex: "I see a bird." },
-            { en: "Help", ko: "돕다", ex: "Can you help me?" },
-            { en: "Wash", ko: "씻다", ex: "Wash your face." },
-            { en: "Big", ko: "큰", ex: "That is a big elephant." },
-            { en: "Small", ko: "작은", ex: "This is a small mouse." },
-            { en: "Tall", ko: "키가 큰", ex: "He is very tall." },
-            { en: "Short", ko: "짧은, 키가 작은", ex: "The pencil is short." },
-            { en: "Long", ko: "긴", ex: "She has long hair." },
-            { en: "Good", ko: "좋은", ex: "Have a good day." },
-            { en: "Bad", ko: "나쁜", ex: "That is a bad idea." },
-            { en: "Happy", ko: "행복한", ex: "I am happy today." },
-            { en: "Sad", ko: "슬픈", ex: "Why are you sad?" },
-            { en: "Angry", ko: "화난", ex: "He is very angry." },
-            { en: "Hot", ko: "뜨거운, 더운", ex: "The weather is hot." },
-            { en: "Cold", ko: "차가운, 추운", ex: "It is cold outside." },
-            { en: "Hungry", ko: "배고픈", ex: "I am hungry." },
-            { en: "Fast", ko: "빠른", ex: "The car is fast." },
-            { en: "Cute", ko: "귀여운", ex: "The baby is cute." }
+            { en: "Fine", ko: "좋은, 잘 지내는", ex: "" }, { en: "Good", ko: "좋은", ex: "" }, { en: "Bad", ko: "나쁜", ex: "" }, { en: "Great", ko: "훌륭한, 멋진", ex: "" }, { en: "Afternoon", ko: "오후", ex: "" }, { en: "Morning", ko: "아침", ex: "" }, { en: "Night", ko: "밤", ex: "" }, { en: "Evening", ko: "저녁", ex: "" }, { en: "Tall", ko: "키가 큰", ex: "" }, { en: "Dog", ko: "개", ex: "" },
+            { en: "Doll", ko: "인형", ex: "" }, { en: "Tiger", ko: "호랑이", ex: "" }, { en: "Grandpa", ko: "할아버지", ex: "" }, { en: "Grandma", ko: "할머니", ex: "" }, { en: "Friend", ko: "친구", ex: "" }, { en: "Teacher", ko: "선생님", ex: "" }, { en: "Carrot", ko: "당근", ex: "" }, { en: "Car", ko: "자동차", ex: "" }, { en: "Guitar", ko: "기타", ex: "" }, { en: "Girl", ko: "소녀", ex: "" },
+            { en: "Angry", ko: "화난", ex: "" }, { en: "Sad", ko: "슬픈", ex: "" }, { en: "Hungry", ko: "배고픈", ex: "" }, { en: "Happy", ko: "행복한", ex: "" }, { en: "Book", ko: "책", ex: "" }, { en: "Bird", ko: "새", ex: "" }, { en: "Violin", ko: "바이올린", ex: "" }, { en: "Voice", ko: "목소리", ex: "" }, { en: "Cap", ko: "모자 (야구모자)", ex: "" }, { en: "Bag", ko: "가방", ex: "" },
+            { en: "Shoe", ko: "신발", ex: "" }, { en: "Jacket", ko: "재킷, 잠바", ex: "" }, { en: "Lion", ko: "사자", ex: "" }, { en: "Lemon", ko: "레몬", ex: "" }, { en: "Read", ko: "읽다", ex: "" }, { en: "Ruler", ko: "자", ex: "" }, { en: "On the bed", ko: "침대 위에", ex: "" }, { en: "On the desk", ko: "책상 위에", ex: "" }, { en: "In the bag", ko: "가방 안에", ex: "" }, { en: "In the box", ko: "상자 안에", ex: "" },
+            { en: "Under the chair", ko: "의자 아래에", ex: "" }, { en: "Fish", ko: "물고기", ex: "" }, { en: "Fat", ko: "뚱뚱한", ex: "" }, { en: "Puppy", ko: "강아지", ex: "" }, { en: "Pink", ko: "분홍색", ex: "" }, { en: "Play baseball", ko: "야구하다", ex: "" }, { en: "Play soccer", ko: "축구하다", ex: "" }, { en: "Play badminton", ko: "배드민턴 치다", ex: "" }, { en: "Play basketball", ko: "농구하다", ex: "" }, { en: "Ride a bike", ko: "자전거를 타다", ex: "" },
+            { en: "Zoo", ko: "동물원", ex: "" }, { en: "Sea", ko: "바다", ex: "" }, { en: "Sock", ko: "양말", ex: "" }, { en: "Quiz", ko: "퀴즈", ex: "" }, { en: "Monday", ko: "월요일", ex: "" }, { en: "Sunday", ko: "일요일", ex: "" }, { en: "Wednesday", ko: "수요일", ex: "" }, { en: "Tuesday", ko: "화요일", ex: "" }, { en: "Friday", ko: "금요일", ex: "" }, { en: "Thursday", ko: "목요일", ex: "" },
+            { en: "Saturday", ko: "토요일", ex: "" }, { en: "Sun", ko: "태양, 해", ex: "" }, { en: "Run", ko: "달리다", ex: "" }, { en: "Red", ko: "빨간색", ex: "" }, { en: "Bed", ko: "침대", ex: "" }, { en: "School", ko: "학교", ex: "" }, { en: "Breakfast", ko: "아침 식사", ex: "" }, { en: "Dinner", ko: "저녁 식사", ex: "" }, { en: "Lunch", ko: "점심 식사", ex: "" }, { en: "Big", ko: "큰", ex: "" },
+            { en: "Pig", ko: "돼지", ex: "" }, { en: "Drawing a picture", ko: "그림 그리기", ex: "" }, { en: "Cooking", ko: "요리하기", ex: "" }, { en: "Reading a book", ko: "책 읽기", ex: "" }, { en: "Watching tv", ko: "TV 보기", ex: "" }, { en: "Blue", ko: "파란색", ex: "" }, { en: "Black", ko: "검은색", ex: "" }, { en: "Clock", ko: "시계 (벽시계/탁상시계)", ex: "" }, { en: "Cloud", ko: "구름", ex: "" }, { en: "Noodles", ko: "국수, 면", ex: "" },
+            { en: "Pizza", ko: "피자", ex: "" }, { en: "Ice cream", ko: "아이스크림", ex: "" }, { en: "Chicken", ko: "치킨, 닭고기", ex: "" }, { en: "Orange juice", ko: "오렌지 주스", ex: "" }, { en: "Apple pie", ko: "애플 파이", ex: "" }, { en: "Watch", ko: "손목시계 / 보다", ex: "" }, { en: "Push", ko: "밀다", ex: "" }, { en: "Shirt", ko: "셔츠", ex: "" }, { en: "Sweater", ko: "스웨터", ex: "" }, { en: "Hairpin", ko: "머리핀", ex: "" },
+            { en: "Hat", ko: "모자 (테가 있는)", ex: "" }, { en: "Fan", ko: "부채, 선풍기", ex: "" }, { en: "Thousand", ko: "천 (1000)", ex: "" }, { en: "Hundred", ko: "백 (100)", ex: "" }, { en: "White", ko: "흰색", ex: "" }, { en: "Three", ko: "셋 (3)", ex: "" }, { en: "What", ko: "무엇", ex: "" }, { en: "Cook", ko: "요리사 / 요리하다", ex: "" }, { en: "Farmer", ko: "농부", ex: "" }, { en: "Scientist", ko: "과학자", ex: "" },
+            { en: "Pilot", ko: "조종사", ex: "" }, { en: "Singer", ko: "가수", ex: "" }, { en: "Doctor", ko: "의사", ex: "" }, { en: "Sky", ko: "하늘", ex: "" }, { en: "Skirt", ko: "치마", ex: "" }, { en: "Swim", ko: "수영하다", ex: "" }, { en: "Family", ko: "가족", ex: "I love my family." }, { en: "Mother", ko: "어머니", ex: "My mother is kind." }, { en: "Father", ko: "아버지", ex: "My father is tall." }, { en: "Brother", ko: "남자 형제", ex: "He is my brother." },
+            { en: "Sister", ko: "여자 형제", ex: "She is my sister." }, { en: "Baby", ko: "아기", ex: "The baby is sleeping." }, { en: "Student", ko: "학생", ex: "I am a student." }, { en: "Boy", ko: "소년", ex: "The boy is playing." }, { en: "Head", ko: "머리", ex: "Touch your head." }, { en: "Hair", ko: "머리카락", ex: "She has long hair." }, { en: "Eye", ko: "눈", ex: "Open your eyes." }, { en: "Ear", ko: "귀", ex: "I have two ears." }, { en: "Nose", ko: "코", ex: "This is my nose." }, { en: "Mouth", ko: "입", ex: "Open your mouth." },
+            { en: "Face", ko: "얼굴", ex: "Wash your face." }, { en: "Hand", ko: "손", ex: "Wash your hands." }, { en: "Leg", ko: "다리", ex: "My legs are long." }, { en: "Foot", ko: "발", ex: "Stamp your feet." }, { en: "Class", ko: "수업, 반", ex: "Welcome to my class." }, { en: "Pencil", ko: "연필", ex: "I have a pencil." }, { en: "Eraser", ko: "지우개", ex: "Can I borrow your eraser?" }, { en: "Desk", ko: "책상", ex: "Sit at your desk." }, { en: "Chair", ko: "의자", ex: "Sit on the chair." }, { en: "Window", ko: "창문", ex: "Open the window." },
+            { en: "Door", ko: "문", ex: "Close the door." }, { en: "Cat", ko: "고양이", ex: "The cat is cute." }, { en: "Bear", ko: "곰", ex: "The bear is big." }, { en: "Monkey", ko: "원숭이", ex: "Monkeys like bananas." }, { en: "Elephant", ko: "코끼리", ex: "It has a long nose." }, { en: "Water", ko: "물", ex: "Drink some water." }, { en: "Milk", ko: "우유", ex: "I drink milk." }, { en: "Juice", ko: "주스", ex: "I like orange juice." }, { en: "Bread", ko: "빵", ex: "I eat bread." }, { en: "Apple", ko: "사과", ex: "I have a red apple." },
+            { en: "Banana", ko: "바나나", ex: "This is a banana." }, { en: "Grape", ko: "포도", ex: "Grapes are sweet." }, { en: "Meat", ko: "고기", ex: "Do you like meat?" }, { en: "Cheese", ko: "치즈", ex: "Mice like cheese." }, { en: "Cake", ko: "케이크", ex: "Happy birthday!" }, { en: "Yellow", ko: "노란색", ex: "A banana is yellow." }, { en: "Green", ko: "초록색", ex: "The tree is green." }, { en: "Moon", ko: "달", ex: "Look at the moon." }, { en: "Star", ko: "별", ex: "I see a star." }, { en: "Rain", ko: "비", ex: "It is raining." },
+            { en: "Snow", ko: "눈", ex: "It is snowing." }, { en: "Tree", ko: "나무", ex: "That is a tall tree." }, { en: "Flower", ko: "꽃", ex: "This flower is beautiful." }, { en: "Today", ko: "오늘", ex: "Today is Monday." }, { en: "Tomorrow", ko: "내일", ex: "See you tomorrow." }, { en: "Go", ko: "가다", ex: "Let's go home." }, { en: "Come", ko: "오다", ex: "Come here, please." }, { en: "Walk", ko: "걷다", ex: "Let's walk together." }, { en: "Jump", ko: "점프하다", ex: "Jump up high." }, { en: "Sit", ko: "앉다", ex: "Sit down, please." },
+            { en: "Stand", ko: "서다", ex: "Stand up, please." }, { en: "Eat", ko: "먹다", ex: "I want to eat pizza." }, { en: "Drink", ko: "마시다", ex: "Drink your milk." }, { en: "Sleep", ko: "자다", ex: "It's time to sleep." }, { en: "Play", ko: "놀다", ex: "Let's play a game." }, { en: "Study", ko: "공부하다", ex: "I study English." }, { en: "Write", ko: "쓰다", ex: "Write your name." }, { en: "Listen", ko: "듣다", ex: "Listen to the music." }, { en: "See", ko: "보다", ex: "I see a bird." }, { en: "Help", ko: "돕다", ex: "Can you help me?" },
+            { en: "Wash", ko: "씻다", ex: "Wash your face." }, { en: "Small", ko: "작은", ex: "This is a small mouse." }, { en: "Short", ko: "짧은", ex: "The pencil is short." }, { en: "Hot", ko: "뜨거운", ex: "The weather is hot." }, { en: "Cute", ko: "귀여운", ex: "The baby is cute." }
         ];
 
-        let learningWords = [...allWords];
+        let currentMode = ''; // 'learn', 'quiz', 'wrong'
+        let targetWords = [];
         let currentIndex = 0;
+        let originalWordsCount = 0;
+        
+        let quizScore = 0;
+        let isAnswered = false;
+        let stageStartTime = 0; 
+        
+        // 게이미피케이션 변수
+        let totalExp = 0;
+
+        // 고음질 음성
+        let availableVoices = [];
+        window.speechSynthesis.onvoiceschanged = () => { availableVoices = window.speechSynthesis.getVoices(); };
+
+        // 🌟 앱 시작 시 데이터 로드
+        window.onload = () => {
+            loadExp();
+        };
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -230,77 +259,327 @@
             }
         }
 
-        shuffleArray(learningWords);
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
 
+        // 🌟 레벨 시스템 계산 및 화면 갱신
+        function getLevelInfo(exp) {
+            const level = Math.floor(exp / 100) + 1;
+            const currentLevelExp = exp % 100;
+            const percent = currentLevelExp;
+            
+            let title = "영단어 새싹 🌱";
+            if (level >= 2 && level < 5) title = "영단어 탐험가 🧭";
+            else if (level >= 5 && level < 10) title = "영단어 기사 ⚔️";
+            else if (level >= 10 && level < 20) title = "영단어 마법사 🧙‍♂️";
+            else if (level >= 20) title = "영단어 마스터 👑";
+
+            return { level, title, currentLevelExp, percent };
+        }
+
+        function loadExp() {
+            totalExp = parseInt(localStorage.getItem('englishTotalExp')) || 0;
+            updateExpUI();
+        }
+
+        function addExp(amount) {
+            totalExp += amount;
+            localStorage.setItem('englishTotalExp', totalExp);
+            updateExpUI();
+        }
+
+        function updateExpUI() {
+            const info = getLevelInfo(totalExp);
+            const titleStr = `Lv.${info.level} ${info.title}`;
+            const textStr = `${info.currentLevelExp} / 100 EXP`;
+            const widthStr = `${info.percent}%`;
+
+            // 메인메뉴 미니 프로필
+            document.getElementById('mini-level-title').innerText = titleStr;
+            document.getElementById('mini-exp-text').innerText = textStr;
+            document.getElementById('mini-exp-bar').style.width = widthStr;
+
+            // 히스토리 화면 풀 프로필
+            document.getElementById('full-level-title').innerText = titleStr;
+            document.getElementById('full-exp-text').innerText = textStr;
+            document.getElementById('full-exp-bar').style.width = widthStr;
+        }
+
+        function openStageSelection(mode) {
+            currentMode = mode;
+            const stageGrid = document.getElementById('stage-grid');
+            const title = document.getElementById('stage-screen-title');
+            
+            stageGrid.innerHTML = ''; 
+            title.innerText = mode === 'learn' ? '학습 단계 선택 📖' : '퀴즈 단계 선택 🎮';
+            const btnColorClass = mode === 'learn' ? 'learn-color' : 'quiz-color';
+
+            const totalStages = Math.ceil(allWords.length / 10);
+            for (let i = 1; i <= totalStages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `stage-btn ${btnColorClass}`;
+                btn.innerText = `${i}단계`;
+                btn.onclick = () => startStage(i);
+                stageGrid.appendChild(btn);
+            }
+            showScreen('stage-selection');
+        }
+
+        function goHome() {
+            showScreen('main-menu');
+        }
+
+        function startStage(stageNumber) {
+            const startIndex = (stageNumber - 1) * 10;
+            targetWords = allWords.slice(startIndex, startIndex + 10);
+            originalWordsCount = targetWords.length;
+            shuffleArray(targetWords);
+            currentIndex = 0;
+            stageStartTime = Date.now();
+
+            if (currentMode === 'learn') {
+                document.getElementById('learn-stage-title').innerText = `학습 ${stageNumber}단계`;
+                updateFlashcard();
+                showScreen('learn-container');
+            } else if (currentMode === 'quiz') {
+                quizScore = 0;
+                document.getElementById('quiz-stage-title').innerText = `퀴즈 ${stageNumber}단계`;
+                updateQuiz();
+                showScreen('quiz-container');
+            }
+        }
+
+        // 🌟 오답노트 모드 시작
+        function startWrongWordsMode() {
+            currentMode = 'wrong';
+            const wrongWords = JSON.parse(localStorage.getItem('englishWrongWords')) || [];
+            
+            if (wrongWords.length === 0) {
+                alert("틀린 단어가 없습니다! 아주 잘하고 있어요! 🎉");
+                return;
+            }
+
+            // 실제 객체로 매핑
+            targetWords = wrongWords.map(enText => allWords.find(w => w.en === enText)).filter(w => w !== undefined);
+            
+            if (targetWords.length === 0) {
+                localStorage.removeItem('englishWrongWords');
+                alert("틀린 단어가 없습니다!");
+                return;
+            }
+
+            originalWordsCount = targetWords.length;
+            shuffleArray(targetWords);
+            currentIndex = 0;
+            stageStartTime = Date.now();
+
+            document.getElementById('learn-stage-title').innerText = `📝 오답노트 복습`;
+            updateFlashcard();
+            showScreen('learn-container');
+        }
+
+        // 🌟 오답 저장 함수
+        function saveWrongWord(wordEn) {
+            let wrongWords = JSON.parse(localStorage.getItem('englishWrongWords')) || [];
+            if (!wrongWords.includes(wordEn)) {
+                wrongWords.push(wordEn);
+                localStorage.setItem('englishWrongWords', JSON.stringify(wrongWords));
+            }
+        }
+
+        // 🌟 오답 제거 함수 (복습 중 '외웠어요' 클릭 시)
+        function removeWrongWord(wordEn) {
+            let wrongWords = JSON.parse(localStorage.getItem('englishWrongWords')) || [];
+            wrongWords = wrongWords.filter(w => w !== wordEn);
+            localStorage.setItem('englishWrongWords', JSON.stringify(wrongWords));
+        }
+
+        /* ================= 📊 학습 이력 저장 및 보기 ================= */
+        function saveStudyHistory(completedWords) {
+            const durationSec = Math.floor((Date.now() - stageStartTime) / 1000); 
+            const offset = new Date().getTimezoneOffset() * 60000;
+            const today = new Date(Date.now() - offset).toISOString().split('T')[0];
+            
+            let history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
+            if(!history[today]) history[today] = { time: 0, words: 0 };
+            
+            history[today].time += durationSec;
+            history[today].words += completedWords;
+            localStorage.setItem('englishStudyHistory', JSON.stringify(history));
+        }
+
+        function showHistoryScreen() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            
+            const history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
+            const dates = Object.keys(history).sort((a, b) => b.localeCompare(a)); 
+            
+            if (dates.length === 0) {
+                historyList.innerHTML = '<div class="history-item">아직 학습 이력이 없습니다. 오늘 첫 공부를 시작해 보세요!</div>';
+            } else {
+                dates.forEach(date => {
+                    const data = history[date];
+                    const mins = Math.floor(data.time / 60);
+                    const secs = data.time % 60;
+                    let timeStr = mins > 0 ? `${mins}분 ${secs}초` : `${secs}초`;
+                    
+                    historyList.innerHTML += `
+                        <div class="history-item">
+                            <strong>📅 ${date}</strong><br>📖 학습한 단어: ${data.words}개
+                            <span>⏱ ${timeStr}</span>
+                        </div>
+                    `;
+                });
+            }
+            showScreen('history-container');
+        }
+
+        /* ================= 학습 및 오답노트 (플래시카드) ================= */
         const cardInner = document.getElementById('card-inner');
-        const flashcard = document.getElementById('flashcard');
-        const progressText = document.getElementById('progress-text');
-        const wordImage = document.getElementById('word-image');
-        
-        flashcard.addEventListener('click', () => {
-            cardInner.classList.toggle('is-flipped');
-        });
+        document.getElementById('flashcard').addEventListener('click', () => { cardInner.classList.toggle('is-flipped'); });
 
-        function updateCard() {
-            if (learningWords.length === 0) {
-                document.getElementById('app-container').style.display = 'none';
-                document.getElementById('success-message').style.display = 'flex';
+        function updateFlashcard() {
+            if (targetWords.length === 0) {
+                saveStudyHistory(originalWordsCount);
+                if (currentMode === 'wrong') {
+                    showResultScreen("🎉 완벽해요! 🎉", "오답노트의 모든 단어를 다 외웠습니다!", "");
+                } else {
+                    addExp(originalWordsCount * 2); // 학습 완료 시 단어당 2 EXP
+                    showResultScreen("🎉 학습 완료! 🎉", `경험치 +${originalWordsCount * 2} 획득!`, "");
+                }
                 return;
             }
 
             cardInner.classList.remove('is-flipped');
-            
-            if (currentIndex >= learningWords.length) {
-                currentIndex = 0;
-            }
+            if (currentIndex >= targetWords.length) currentIndex = 0;
 
-            progressText.innerText = `남은 단어: ${learningWords.length}개 (현재: ${currentIndex + 1}번째)`;
+            document.getElementById('learn-progress').innerText = `남은 단어: ${targetWords.length}개 (현재 ${currentIndex + 1}/${targetWords.length})`;
             
             setTimeout(() => {
-                const currentWordObj = learningWords[currentIndex];
-                
-                wordImage.src = `https://placehold.co/400x150/FFE4E1/FF6B6B?text=${currentWordObj.en}`;
-                wordImage.alt = currentWordObj.en + " image";
-
-                document.getElementById('en-word').innerText = currentWordObj.en;
-                document.getElementById('ko-meaning').innerText = currentWordObj.ko;
-                document.getElementById('example-sentence').innerText = currentWordObj.ex;
+                const currentWord = targetWords[currentIndex];
+                const wordImage = document.getElementById('word-image');
+                wordImage.src = `https://placehold.co/400x150/FFE4E1/FF6B6B?text=${currentWord.en}`;
+                document.getElementById('en-word').innerText = currentWord.en;
+                document.getElementById('ko-meaning').innerText = currentWord.ko;
+                document.getElementById('example-sentence').innerText = currentWord.ex || "";
             }, 150); 
         }
 
         function nextWord() {
-            if (learningWords.length === 0) return;
-            if (currentIndex < learningWords.length - 1) {
+            if (targetWords.length === 0) return;
+            if (currentIndex < targetWords.length - 1) {
                 currentIndex++;
             } else {
-                alert("한 바퀴 다 돌았습니다! 모르는 단어를 다시 섞어서 보여줍니다.");
-                shuffleArray(learningWords);
+                alert("한 바퀴 다 돌았습니다! 다시 섞어서 복습합니다.");
+                shuffleArray(targetWords);
                 currentIndex = 0;
             }
-            updateCard();
+            updateFlashcard();
         }
 
         function prevWord() {
             if (currentIndex > 0) {
                 currentIndex--;
-                updateCard();
+                updateFlashcard();
             }
         }
 
         function markAsKnown() {
-            learningWords.splice(currentIndex, 1);
-            updateCard();
+            const knownWord = targetWords[currentIndex].en;
+            targetWords.splice(currentIndex, 1);
+            
+            if (currentMode === 'wrong') {
+                removeWrongWord(knownWord); // 오답노트에서 영구 제거
+            }
+            updateFlashcard();
         }
 
-        function playAudio(event) {
-            event.stopPropagation(); 
-            const text = learningWords[currentIndex].en;
+        /* ================= 퀴즈 로직 ================= */
+        function updateQuiz() {
+            if (currentIndex >= targetWords.length) {
+                saveStudyHistory(targetWords.length);
+                addExp(quizScore * 5); // 퀴즈 정답 1개당 5 EXP
+                showResultScreen("🎉 퀴즈 완료! 🎉", `경험치 +${quizScore * 5} 획득!`, `내 점수: ${quizScore} / ${targetWords.length} 점`);
+                return;
+            }
+
+            isAnswered = false;
+            const currentWord = targetWords[currentIndex];
+            document.getElementById('quiz-en-word').innerText = currentWord.en;
+            document.getElementById('quiz-progress').innerText = `문제: ${currentIndex + 1} / ${targetWords.length}`;
+
+            let options = [currentWord.ko];
+            while(options.length < 4) {
+                const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+                if (!options.includes(randomWord.ko)) {
+                    options.push(randomWord.ko);
+                }
+            }
+            shuffleArray(options);
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkQuizAnswer(btn, opt, currentWord);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkQuizAnswer(clickedBtn, selectedKo, currentWordObj) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const correctKo = currentWordObj.ko;
+            const buttons = document.getElementById('quiz-options').getElementsByTagName('button');
+
+            if (selectedKo === correctKo) {
+                clickedBtn.classList.add('correct');
+                quizScore++;
+            } else {
+                clickedBtn.classList.add('wrong');
+                saveWrongWord(currentWordObj.en); // 📝 틀린 단어 자동 저장
+                for(let btn of buttons) {
+                    if (btn.innerText === correctKo) btn.classList.add('correct');
+                }
+            }
+
+            setTimeout(() => {
+                currentIndex++;
+                updateQuiz();
+            }, 1500);
+        }
+
+        /* ================= 공통 결과 화면 ================= */
+        function showResultScreen(title, desc, score) {
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('result-desc').innerText = desc;
+            document.getElementById('result-score').innerText = score;
+            showScreen('result-message');
+        }
+
+        /* ================= 고음질 음성 재생 ================= */
+        function playAudio(caller) {
+            if(window.event) window.event.stopPropagation();
+            const text = targetWords[currentIndex].en;
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US'; 
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+
+            if (availableVoices.length > 0) {
+                const bestVoice = availableVoices.find(v => v.name.includes('Google US English')) || 
+                                  availableVoices.find(v => v.name.includes('Samantha')) || 
+                                  availableVoices.find(v => v.name.includes('Siri')) || 
+                                  availableVoices.find(v => v.lang === 'en-US');
+                if (bestVoice) utterance.voice = bestVoice;
+            }
             window.speechSynthesis.speak(utterance);
         }
-
-        updateCard();
     </script>
 </body>
 </html>
