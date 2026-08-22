@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>초4 영단어 마스터 (듀오링고 스타일)</title>
-    <!-- 동글동글한 듀오링고 느낌의 영문 폰트 불러오기 -->
+    <title>초4 영단어 마스터 (주간/월간 통계 추가)</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         /* 🎨 듀오링고 컬러 팔레트 */
@@ -23,16 +22,24 @@
             font-family: 'Nunito', 'Malgun Gothic', sans-serif; 
             background-color: var(--bg-color); color: var(--text-main);
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
-            min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
+            min-height: 100vh; margin: 0; padding: 60px 20px 20px 20px; box-sizing: border-box;
         }
         
         h1, h2 { color: var(--text-main); margin-bottom: 5px; text-align: center; font-weight: 900; }
         .subtitle { color: var(--text-sub); margin-bottom: 25px; text-align: center; font-weight: 700;}
 
+        /* ⏱ 글로벌 타이머 UI */
+        #global-timer-display {
+            position: fixed; top: 15px; right: 15px; background: rgba(255,255,255,0.95); 
+            border: 2px solid var(--gray-light); padding: 8px 15px; border-radius: 20px; 
+            font-weight: 900; color: var(--text-main); box-shadow: 0 4px 0 var(--gray-light); 
+            z-index: 1000; display: flex; align-items: center; gap: 5px; font-size: 1.1rem;
+        }
+
         .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; padding-bottom: 30px;}
         .screen.active { display: flex; }
 
-        /* 🔘 듀오링고 스타일 3D 버튼 공통 설정 */
+        /* 공통 버튼 */
         .btn {
             width: 100%; border: none; border-radius: 16px; color: white; cursor: pointer; 
             font-weight: 800; font-size: 1.2rem; text-align: center; box-sizing: border-box;
@@ -40,54 +47,40 @@
         }
         .btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
 
-        /* 버튼 컬러셋 */
         .btn-green { background-color: var(--green); box-shadow: 0 4px 0 var(--green-dark); padding: 18px; }
         .btn-blue { background-color: var(--blue); box-shadow: 0 4px 0 var(--blue-dark); padding: 18px; }
         .btn-red { background-color: var(--red); box-shadow: 0 4px 0 var(--red-dark); padding: 18px; }
         .btn-purple { background-color: var(--purple); box-shadow: 0 4px 0 var(--purple-dark); padding: 18px; }
         .btn-gray { background-color: var(--gray-light); color: var(--gray-dark); box-shadow: 0 4px 0 #d9d9d9; padding: 15px; }
 
-        /* 메인 메뉴 미니 프로필 */
         .mini-profile {
             width: 100%; background-color: white; border: 2px solid var(--gray-light); border-radius: 20px; 
             padding: 20px; margin-bottom: 30px; text-align: center; box-sizing: border-box;
         }
         .level-title { font-size: 1.4rem; font-weight: 900; color: var(--yellow); margin-bottom: 10px; }
 
-        /* 📊 경험치 / 진행도 바 (Progress Bar) */
-        .progress-bar-bg {
-            width: 100%; background-color: var(--gray-light); border-radius: 12px; height: 20px; 
-            margin: 10px 0; overflow: hidden; position: relative;
-        }
-        .progress-bar-fill {
-            height: 100%; background-color: var(--yellow); border-radius: 12px; transition: width 0.4s ease;
-        }
+        .progress-bar-bg { width: 100%; background-color: var(--gray-light); border-radius: 12px; height: 20px; margin: 10px 0; overflow: hidden; position: relative;}
+        .progress-bar-fill { height: 100%; background-color: var(--yellow); border-radius: 12px; transition: width 0.4s ease; }
         .progress-bar-fill.green-fill { background-color: var(--green); }
         .progress-text { position: absolute; width: 100%; text-align: center; top: 0; font-size: 0.9rem; font-weight: 800; color: #fff; text-shadow: 0px 1px 1px rgba(0,0,0,0.2);}
         
         .top-progress { display: flex; align-items: center; width: 100%; gap: 15px; margin-bottom: 20px;}
         .close-btn { background: none; border: none; font-size: 1.5rem; color: var(--gray-dark); cursor: pointer; font-weight: 900;}
 
-        /* 단계 선택 화면 */
-        .stage-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; width: 100%; }
-        .stage-btn {
-            padding: 20px 0; font-size: 1.3rem; color: white; border: none; border-radius: 16px; 
-            cursor: pointer; font-weight: 900; transition: transform 0.1s;
-        }
+        /* 플래시카드 & 퀴즈 컨테이너 설정 */
+        .stage-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 20px; }
+        .stage-btn { padding: 20px 0; font-size: 1.3rem; color: white; border: none; border-radius: 16px; cursor: pointer; font-weight: 900; transition: transform 0.1s; }
         .stage-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
         .stage-btn.learn-color { background-color: var(--green); box-shadow: 0 4px 0 var(--green-dark); }
         .stage-btn.quiz-color { background-color: var(--blue); box-shadow: 0 4px 0 var(--blue-dark); }
 
-        /* 학습 화면 (플래시카드) */
         .card-container { width: 100%; height: 380px; perspective: 1000px; margin-bottom: 25px; cursor: pointer; }
         .card { width: 100%; height: 100%; position: relative; transition: transform 0.5s; transform-style: preserve-3d; }
         .card.is-flipped { transform: rotateY(180deg); }
-        
         .card-face { 
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; 
-            border-radius: 24px; border: 2px solid var(--gray-light); box-shadow: 0 8px 0 var(--gray-light); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            text-align: center; padding: 20px; box-sizing: border-box; background-color: #fff;
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; 
+            border: 2px solid var(--gray-light); box-shadow: 0 8px 0 var(--gray-light); display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box; background-color: #fff;
         }
         .card-back { transform: rotateY(180deg); border-color: #d7ffb8; background-color: #f7ffe6;}
         
@@ -106,38 +99,57 @@
         }
         .audio-icon-btn:active { transform: translateY(4px); box-shadow: none; }
 
-        /* 퀴즈 화면 */
         .quiz-word-box {
             width: 100%; background-color: white; border: 2px solid var(--gray-light); border-radius: 24px; 
-            padding: 40px 20px; text-align: center; box-shadow: 0 8px 0 var(--gray-light); margin-bottom: 30px;
-            box-sizing: border-box;
+            padding: 40px 20px; text-align: center; box-shadow: 0 8px 0 var(--gray-light); margin-bottom: 30px; box-sizing: border-box;
         }
         .quiz-word { font-size: 3.5rem; font-weight: 900; color: var(--text-main); margin-bottom: 10px; }
-        
-        .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-bottom: 15px; }
         .quiz-option-btn {
             padding: 25px 10px; font-size: 1.3rem; background-color: #ffffff; color: var(--text-main);
             border: 2px solid var(--gray-light); border-radius: 16px; cursor: pointer; font-weight: 800;
             box-shadow: 0 4px 0 var(--gray-light); transition: 0.1s; word-break: keep-all;
         }
         .quiz-option-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        
-        /* 퀴즈 정답/오답 스타일 */
         .quiz-option-btn.correct { background-color: #d7ffb8; color: var(--green-dark); border-color: var(--green); box-shadow: 0 4px 0 var(--green-dark); }
         .quiz-option-btn.wrong { background-color: #ffdfe0; color: var(--red-dark); border-color: var(--red); box-shadow: 0 4px 0 var(--red-dark); }
 
-        /* 학습 이력 화면 */
+        /* 📊 학습 이력 및 통계 스타일 (새로 추가됨) */
+        .stats-card {
+            width: 100%; background-color: white; border: 2px solid var(--gray-light); border-radius: 20px;
+            padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 0 var(--gray-light); box-sizing: border-box; text-align: center;
+        }
+        .stats-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 10px; }
+        .stats-row { display: flex; justify-content: space-around; font-weight: 800; font-size: 1.1rem; color: var(--text-sub); }
+        .stats-val { color: var(--text-main); font-size: 1.3rem;}
+
+        /* 월별 탭 */
+        .tab-container { display: flex; gap: 10px; overflow-x: auto; width: 100%; padding-bottom: 10px; margin-bottom: 10px; scrollbar-width: none; }
+        .tab-container::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 10px 25px; border-radius: 16px; border: 2px solid var(--gray-light); background: #fff;
+            color: var(--gray-dark); font-weight: 900; font-size: 1.1rem; cursor: pointer; white-space: nowrap; transition: 0.1s; box-shadow: 0 4px 0 var(--gray-light);
+        }
+        .tab-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--gray-light); }
+        .tab-btn.active { border-color: var(--purple); background: var(--purple); color: #fff; box-shadow: 0 4px 0 var(--purple-dark); transform: translateY(-2px); }
+
         .history-item { 
             width: 100%; background-color: white; border: 2px solid var(--gray-light); border-radius: 16px; 
             padding: 20px; margin-bottom: 15px; box-sizing: border-box; box-shadow: 0 4px 0 var(--gray-light);
         }
         .history-item strong { color: var(--text-main); font-size: 1.2rem; display: block; margin-bottom: 10px;}
-        .history-stat { display: flex; justify-content: space-between; font-weight: 700; color: var(--text-sub);}
-        
+        .history-stat { display: flex; justify-content: space-between; font-weight: 700; color: var(--text-sub); margin-bottom: 5px;}
+        .history-detail { font-size: 0.95rem; color: var(--purple-dark); font-weight: 800; margin-top: 10px; background: #f4f0ff; padding: 10px; border-radius: 10px;}
+
         .result-image { font-size: 6rem; margin: 20px 0; }
     </style>
 </head>
 <body>
+
+    <!-- ⏱ 우측 상단 고정 타이머 -->
+    <div id="global-timer-display">
+        <span>⏱</span> <span id="timer-text">00:00</span>
+    </div>
 
     <!-- 1. 메인 메뉴 화면 -->
     <div id="main-menu" class="screen active">
@@ -154,7 +166,7 @@
         <button class="btn btn-green" onclick="openStageSelection('learn')">📖 단어 학습하기</button>
         <button class="btn btn-blue" onclick="openStageSelection('quiz')">🎮 단어 퀴즈풀기</button>
         <button class="btn btn-red" onclick="startWrongWordsMode()">📝 내 오답노트 복습</button>
-        <button class="btn btn-purple" onclick="showHistoryScreen()">📊 학습 이력 확인</button>
+        <button class="btn btn-purple" onclick="renderHistoryScreen()">📊 학습 이력 & 통계</button>
     </div>
 
     <!-- 2. 단계 선택 화면 -->
@@ -164,14 +176,15 @@
             <div class="progress-bar-bg" style="margin: 0;"><div class="progress-bar-fill" style="width: 100%;"></div></div>
         </div>
         <h2 id="stage-screen-title">단계 선택</h2>
-        <p class="subtitle">1~11단계는 엑셀 필수 단어입니다.</p>
+        <p class="subtitle">1~11단계는 필수 기초 단어입니다.</p>
         <div class="stage-grid" id="stage-grid"></div>
+        <button class="btn btn-gray" onclick="goHome()">🏠 메인 메뉴로</button>
     </div>
 
-    <!-- 3. 학습 & 오답노트 공용 화면 -->
+    <!-- 3. 학습 화면 -->
     <div id="learn-container" class="screen">
         <div class="top-progress">
-            <button class="close-btn" onclick="goHome()">✖</button>
+            <button class="close-btn" onclick="openStageSelection(currentMode)">✖</button>
             <div class="progress-bar-bg"><div class="progress-bar-fill green-fill" id="learn-progress-bar" style="width: 0%;"></div></div>
         </div>
         
@@ -196,12 +209,13 @@
             <button class="btn btn-blue" onclick="nextWord()">다음 ▶</button>
         </div>
         <button class="btn btn-green" style="width: 100%;" onclick="markAsKnown()">✅ 이 단어는 다 외웠어요!</button>
+        <button class="btn btn-gray" style="margin-top: 15px;" onclick="goHome()">🏠 메인 메뉴로</button>
     </div>
 
     <!-- 4. 퀴즈 화면 -->
     <div id="quiz-container" class="screen">
         <div class="top-progress">
-            <button class="close-btn" onclick="goHome()">✖</button>
+            <button class="close-btn" onclick="openStageSelection(currentMode)">✖</button>
             <div class="progress-bar-bg"><div class="progress-bar-fill green-fill" id="quiz-progress-bar" style="width: 0%;"></div></div>
         </div>
         
@@ -211,16 +225,41 @@
         </div>
 
         <div class="quiz-options-grid" id="quiz-options"></div>
+        <button class="btn btn-gray" style="margin-top: 15px;" onclick="goHome()">🏠 메인 메뉴로</button>
     </div>
 
-    <!-- 5. 학습 이력 화면 -->
+    <!-- 5. 📊 통계 및 학습 이력 화면 (개편됨) -->
     <div id="history-container" class="screen">
         <div class="top-progress">
             <button class="close-btn" onclick="goHome()">✖</button>
-            <div style="flex-grow: 1; text-align: center; font-weight: 900; font-size: 1.2rem; color: var(--text-main);">학습 이력</div>
+            <div style="flex-grow: 1; text-align: center; font-weight: 900; font-size: 1.2rem; color: var(--text-main);">나의 학습 기록</div>
         </div>
         
+        <!-- 주간 통계 -->
+        <div class="stats-card" style="border-color: var(--yellow);">
+            <div class="stats-title" style="color: var(--yellow-dark);">🌟 이번 주 누적 통계</div>
+            <div class="stats-row">
+                <div>⏱ 시간<br><span class="stats-val" id="weekly-time">0분 0초</span></div>
+                <div>📖 단어<br><span class="stats-val" id="weekly-words" style="color: var(--green);">0개</span></div>
+            </div>
+        </div>
+
+        <!-- 월별 탭 -->
+        <div class="tab-container" id="month-tabs"></div>
+
+        <!-- 월간 통계 -->
+        <div class="stats-card" style="border-color: var(--purple);">
+            <div class="stats-title" id="monthly-title" style="color: var(--purple-dark);">0월 통계</div>
+            <div class="stats-row">
+                <div>⏱ 시간<br><span class="stats-val" id="monthly-time">0분 0초</span></div>
+                <div>📖 단어<br><span class="stats-val" id="monthly-words" style="color: var(--green);">0개</span></div>
+            </div>
+        </div>
+
+        <!-- 일자별 상세 이력 리스트 -->
         <div style="width: 100%;" id="history-list"></div>
+        
+        <button class="btn btn-gray" style="margin-top: 15px;" onclick="goHome()">🏠 메인 메뉴로 돌아가기</button>
     </div>
 
     <!-- 6. 결과 화면 -->
@@ -234,11 +273,11 @@
             <div class="level-title" id="result-score" style="font-size: 2rem;">+20</div>
         </div>
 
-        <button class="btn btn-green" onclick="goHome()">계속하기</button>
+        <button class="btn btn-green" onclick="handleResultContinue()">계속하기</button>
     </div>
 
     <script>
-        // ✅ 175개 단어 데이터 
+        // ✅ 전체 단어 데이터 175개
         const allWords = [
             { en: "Fine", ko: "좋은, 잘 지내는", ex: "" }, { en: "Good", ko: "좋은", ex: "" }, { en: "Bad", ko: "나쁜", ex: "" }, { en: "Great", ko: "훌륭한, 멋진", ex: "" }, { en: "Afternoon", ko: "오후", ex: "" }, { en: "Morning", ko: "아침", ex: "" }, { en: "Night", ko: "밤", ex: "" }, { en: "Evening", ko: "저녁", ex: "" }, { en: "Tall", ko: "키가 큰", ex: "" }, { en: "Dog", ko: "개", ex: "" },
             { en: "Doll", ko: "인형", ex: "" }, { en: "Tiger", ko: "호랑이", ex: "" }, { en: "Grandpa", ko: "할아버지", ex: "" }, { en: "Grandma", ko: "할머니", ex: "" }, { en: "Friend", ko: "친구", ex: "" }, { en: "Teacher", ko: "선생님", ex: "" }, { en: "Carrot", ko: "당근", ex: "" }, { en: "Car", ko: "자동차", ex: "" }, { en: "Guitar", ko: "기타", ex: "" }, { en: "Girl", ko: "소녀", ex: "" },
@@ -247,9 +286,9 @@
             { en: "Under the chair", ko: "의자 아래에", ex: "" }, { en: "Fish", ko: "물고기", ex: "" }, { en: "Fat", ko: "뚱뚱한", ex: "" }, { en: "Puppy", ko: "강아지", ex: "" }, { en: "Pink", ko: "분홍색", ex: "" }, { en: "Play baseball", ko: "야구하다", ex: "" }, { en: "Play soccer", ko: "축구하다", ex: "" }, { en: "Play badminton", ko: "배드민턴 치다", ex: "" }, { en: "Play basketball", ko: "농구하다", ex: "" }, { en: "Ride a bike", ko: "자전거를 타다", ex: "" },
             { en: "Zoo", ko: "동물원", ex: "" }, { en: "Sea", ko: "바다", ex: "" }, { en: "Sock", ko: "양말", ex: "" }, { en: "Quiz", ko: "퀴즈", ex: "" }, { en: "Monday", ko: "월요일", ex: "" }, { en: "Sunday", ko: "일요일", ex: "" }, { en: "Wednesday", ko: "수요일", ex: "" }, { en: "Tuesday", ko: "화요일", ex: "" }, { en: "Friday", ko: "금요일", ex: "" }, { en: "Thursday", ko: "목요일", ex: "" },
             { en: "Saturday", ko: "토요일", ex: "" }, { en: "Sun", ko: "태양, 해", ex: "" }, { en: "Run", ko: "달리다", ex: "" }, { en: "Red", ko: "빨간색", ex: "" }, { en: "Bed", ko: "침대", ex: "" }, { en: "School", ko: "학교", ex: "" }, { en: "Breakfast", ko: "아침 식사", ex: "" }, { en: "Dinner", ko: "저녁 식사", ex: "" }, { en: "Lunch", ko: "점심 식사", ex: "" }, { en: "Big", ko: "큰", ex: "" },
-            { en: "Pig", ko: "돼지", ex: "" }, { en: "Drawing a picture", ko: "그림 그리기", ex: "" }, { en: "Cooking", ko: "요리하기", ex: "" }, { en: "Reading a book", ko: "책 읽기", ex: "" }, { en: "Watching tv", ko: "TV 보기", ex: "" }, { en: "Blue", ko: "파란색", ex: "" }, { en: "Black", ko: "검은색", ex: "" }, { en: "Clock", ko: "시계 (벽시계/탁상시계)", ex: "" }, { en: "Cloud", ko: "구름", ex: "" }, { en: "Noodles", ko: "국수, 면", ex: "" },
+            { en: "Pig", ko: "돼지", ex: "" }, { en: "Drawing a picture", ko: "그림 그리기", ex: "" }, { en: "Cooking", ko: "요리하기", ex: "" }, { en: "Reading a book", ko: "책 읽기", ex: "" }, { en: "Watching tv", ko: "TV 보기", ex: "" }, { en: "Blue", ko: "파란색", ex: "" }, { en: "Black", ko: "검은색", ex: "" }, { en: "Clock", ko: "시계", ex: "" }, { en: "Cloud", ko: "구름", ex: "" }, { en: "Noodles", ko: "국수, 면", ex: "" },
             { en: "Pizza", ko: "피자", ex: "" }, { en: "Ice cream", ko: "아이스크림", ex: "" }, { en: "Chicken", ko: "치킨, 닭고기", ex: "" }, { en: "Orange juice", ko: "오렌지 주스", ex: "" }, { en: "Apple pie", ko: "애플 파이", ex: "" }, { en: "Watch", ko: "손목시계 / 보다", ex: "" }, { en: "Push", ko: "밀다", ex: "" }, { en: "Shirt", ko: "셔츠", ex: "" }, { en: "Sweater", ko: "스웨터", ex: "" }, { en: "Hairpin", ko: "머리핀", ex: "" },
-            { en: "Hat", ko: "모자 (테가 있는)", ex: "" }, { en: "Fan", ko: "부채, 선풍기", ex: "" }, { en: "Thousand", ko: "천 (1000)", ex: "" }, { en: "Hundred", ko: "백 (100)", ex: "" }, { en: "White", ko: "흰색", ex: "" }, { en: "Three", ko: "셋 (3)", ex: "" }, { en: "What", ko: "무엇", ex: "" }, { en: "Cook", ko: "요리사 / 요리하다", ex: "" }, { en: "Farmer", ko: "농부", ex: "" }, { en: "Scientist", ko: "과학자", ex: "" },
+            { en: "Hat", ko: "모자", ex: "" }, { en: "Fan", ko: "부채, 선풍기", ex: "" }, { en: "Thousand", ko: "천 (1000)", ex: "" }, { en: "Hundred", ko: "백 (100)", ex: "" }, { en: "White", ko: "흰색", ex: "" }, { en: "Three", ko: "셋 (3)", ex: "" }, { en: "What", ko: "무엇", ex: "" }, { en: "Cook", ko: "요리사 / 요리하다", ex: "" }, { en: "Farmer", ko: "농부", ex: "" }, { en: "Scientist", ko: "과학자", ex: "" },
             { en: "Pilot", ko: "조종사", ex: "" }, { en: "Singer", ko: "가수", ex: "" }, { en: "Doctor", ko: "의사", ex: "" }, { en: "Sky", ko: "하늘", ex: "" }, { en: "Skirt", ko: "치마", ex: "" }, { en: "Swim", ko: "수영하다", ex: "" }, { en: "Family", ko: "가족", ex: "I love my family." }, { en: "Mother", ko: "어머니", ex: "My mother is kind." }, { en: "Father", ko: "아버지", ex: "My father is tall." }, { en: "Brother", ko: "남자 형제", ex: "He is my brother." },
             { en: "Sister", ko: "여자 형제", ex: "She is my sister." }, { en: "Baby", ko: "아기", ex: "The baby is sleeping." }, { en: "Student", ko: "학생", ex: "I am a student." }, { en: "Boy", ko: "소년", ex: "The boy is playing." }, { en: "Head", ko: "머리", ex: "Touch your head." }, { en: "Hair", ko: "머리카락", ex: "She has long hair." }, { en: "Eye", ko: "눈", ex: "Open your eyes." }, { en: "Ear", ko: "귀", ex: "I have two ears." }, { en: "Nose", ko: "코", ex: "This is my nose." }, { en: "Mouth", ko: "입", ex: "Open your mouth." },
             { en: "Face", ko: "얼굴", ex: "Wash your face." }, { en: "Hand", ko: "손", ex: "Wash your hands." }, { en: "Leg", ko: "다리", ex: "My legs are long." }, { en: "Foot", ko: "발", ex: "Stamp your feet." }, { en: "Class", ko: "수업, 반", ex: "Welcome to my class." }, { en: "Pencil", ko: "연필", ex: "I have a pencil." }, { en: "Eraser", ko: "지우개", ex: "Can I borrow your eraser?" }, { en: "Desk", ko: "책상", ex: "Sit at your desk." }, { en: "Chair", ko: "의자", ex: "Sit on the chair." }, { en: "Window", ko: "창문", ex: "Open the window." },
@@ -264,15 +303,88 @@
         let targetWords = [];
         let currentIndex = 0;
         let originalWordsCount = 0;
+        let currentStageNumber = 0;
         let quizScore = 0;
         let isAnswered = false;
-        let stageStartTime = 0; 
         let totalExp = 0;
+        
+        // ⏱ 타이머 변수
+        let activeStudy = false;
+        let dailySeconds = 0;
+        let timerInterval = null;
 
+        // 📊 월별 탭 변수
+        let currentHistoryMonth = "";
+
+        // 고음질 음성
         let availableVoices = [];
         window.speechSynthesis.onvoiceschanged = () => { availableVoices = window.speechSynthesis.getVoices(); };
 
-        window.onload = () => { loadExp(); };
+        window.onload = () => { 
+            loadExp(); 
+            startGlobalTimer(); 
+        };
+
+        /* ================= ⏱ 타이머 및 유틸 로직 ================= */
+        function getTodayStr() {
+            const offset = new Date().getTimezoneOffset() * 60000;
+            return new Date(Date.now() - offset).toISOString().split('T')[0];
+        }
+
+        // 초(seconds)를 보기 좋은 시/분/초 텍스트로 변환
+        function formatTimeText(totalSec) {
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            if (h > 0) return `${h}시간 ${m}분 ${s}초`;
+            if (m > 0) return `${m}분 ${s}초`;
+            return `${s}초`;
+        }
+
+        function startGlobalTimer() {
+            const today = getTodayStr();
+            const history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
+            dailySeconds = history[today] ? (history[today].time || 0) : 0;
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                if (activeStudy) {
+                    dailySeconds++;
+                    updateTimerUI();
+                    saveTimeOnly(); 
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const m = Math.floor(dailySeconds / 60).toString().padStart(2, '0');
+            const s = (dailySeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-text').innerText = `${m}:${s}`;
+        }
+
+        function saveTimeOnly() {
+            const today = getTodayStr();
+            let history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
+            if (!history[today]) history[today] = { time: 0, words: 0, learn: [], quiz: [] };
+            history[today].time = dailySeconds;
+            localStorage.setItem('englishStudyHistory', JSON.stringify(history));
+        }
+
+        function saveStageCompletion(completedWords) {
+            const today = getTodayStr();
+            let history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
+            if (!history[today]) history[today] = { time: dailySeconds, words: 0, learn: [], quiz: [] };
+            
+            history[today].words += completedWords;
+            if (currentMode === 'learn') {
+                if (!history[today].learn) history[today].learn = [];
+                if (!history[today].learn.includes(currentStageNumber)) history[today].learn.push(currentStageNumber);
+            } else if (currentMode === 'quiz') {
+                if (!history[today].quiz) history[today].quiz = [];
+                if (!history[today].quiz.includes(currentStageNumber)) history[today].quiz.push(currentStageNumber);
+            }
+            localStorage.setItem('englishStudyHistory', JSON.stringify(history));
+        }
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -284,20 +396,17 @@
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
-            loadExp(); // 화면 전환 시 경험치 갱신
+            loadExp(); 
         }
 
-        // 🌟 경험치 로직
         function getLevelInfo(exp) {
             const level = Math.floor(exp / 100) + 1;
             const currentLevelExp = exp % 100;
-            
             let title = "영단어 새싹 🌱";
             if (level >= 2 && level < 5) title = "영단어 탐험가 🧭";
             else if (level >= 5 && level < 10) title = "영단어 기사 ⚔️";
             else if (level >= 10 && level < 20) title = "영단어 마법사 🧙‍♂️";
             else if (level >= 20) title = "영단어 마스터 👑";
-
             return { level, title, currentLevelExp, percent: currentLevelExp };
         }
 
@@ -314,12 +423,13 @@
             localStorage.setItem('englishTotalExp', totalExp);
         }
 
-        // 🌟 스테이지 화면 열기
         function openStageSelection(mode) {
+            activeStudy = false; 
             currentMode = mode;
             const stageGrid = document.getElementById('stage-grid');
             stageGrid.innerHTML = ''; 
             const btnColorClass = mode === 'learn' ? 'learn-color' : 'quiz-color';
+            document.getElementById('stage-screen-title').innerText = mode === 'learn' ? '학습 단계 선택' : '퀴즈 단계 선택';
 
             const totalStages = Math.ceil(allWords.length / 10);
             for (let i = 1; i <= totalStages; i++) {
@@ -332,16 +442,20 @@
             showScreen('stage-selection');
         }
 
-        function goHome() { showScreen('main-menu'); }
+        function goHome() { 
+            activeStudy = false; 
+            showScreen('main-menu'); 
+        }
 
-        // 🌟 스테이지 시작
         function startStage(stageNumber) {
+            activeStudy = true; 
+            currentStageNumber = stageNumber;
             const startIndex = (stageNumber - 1) * 10;
+            
             targetWords = allWords.slice(startIndex, startIndex + 10);
             originalWordsCount = targetWords.length;
             shuffleArray(targetWords);
             currentIndex = 0;
-            stageStartTime = Date.now();
 
             if (currentMode === 'learn') {
                 updateFlashcard();
@@ -353,7 +467,6 @@
             }
         }
 
-        // 🌟 오답노트 모드 시작
         function startWrongWordsMode() {
             currentMode = 'wrong';
             const wrongWords = JSON.parse(localStorage.getItem('englishWrongWords')) || [];
@@ -365,10 +478,10 @@
                 return alert("틀린 단어가 없습니다!");
             }
 
+            activeStudy = true; 
             originalWordsCount = targetWords.length;
             shuffleArray(targetWords);
             currentIndex = 0;
-            stageStartTime = Date.now();
 
             updateFlashcard();
             showScreen('learn-container');
@@ -388,43 +501,110 @@
             localStorage.setItem('englishWrongWords', JSON.stringify(wrongWords));
         }
 
-        function saveStudyHistory(completedWords) {
-            const durationSec = Math.floor((Date.now() - stageStartTime) / 1000); 
-            const offset = new Date().getTimezoneOffset() * 60000;
-            const today = new Date(Date.now() - offset).toISOString().split('T')[0];
-            
-            let history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
-            if(!history[today]) history[today] = { time: 0, words: 0 };
-            
-            history[today].time += durationSec;
-            history[today].words += completedWords;
-            localStorage.setItem('englishStudyHistory', JSON.stringify(history));
+        function handleResultContinue() {
+            activeStudy = false;
+            if (currentMode === 'wrong') {
+                goHome();
+            } else {
+                openStageSelection(currentMode);
+            }
         }
 
-        function showHistoryScreen() {
-            const historyList = document.getElementById('history-list');
-            historyList.innerHTML = '';
+        /* ================= 📊 주간/월간 통계 렌더링 ================= */
+        // 오늘을 기준으로 '월요일'과 '일요일' 날짜 객체를 구하는 함수
+        function getWeekRange() {
+            const today = new Date();
+            const day = today.getDay() || 7; 
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - day + 1);
+            monday.setHours(0,0,0,0);
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23,59,59,999);
+            return { monday, sunday };
+        }
+
+        function renderHistoryScreen() {
+            activeStudy = false; 
+            showScreen('history-container');
+            
             const history = JSON.parse(localStorage.getItem('englishStudyHistory')) || {};
             const dates = Object.keys(history).sort((a, b) => b.localeCompare(a)); 
             
-            if (dates.length === 0) {
-                historyList.innerHTML = '<div class="history-item">아직 학습 이력이 없습니다!</div>';
+            // 1. 이번 주 통계 계산
+            const { monday, sunday } = getWeekRange();
+            let weeklyTime = 0, weeklyWords = 0;
+            
+            dates.forEach(d => {
+                const parts = d.split('-');
+                const dObj = new Date(parts[0], parts[1]-1, parts[2]); // local time
+                if (dObj >= monday && dObj <= sunday) {
+                    weeklyTime += history[d].time || 0;
+                    weeklyWords += history[d].words || 0;
+                }
+            });
+            document.getElementById('weekly-time').innerText = formatTimeText(weeklyTime);
+            document.getElementById('weekly-words').innerText = `${weeklyWords}개`;
+
+            // 2. 월별 탭 생성
+            // 데이터가 있는 달 추출 (예: '2026-08')
+            const monthSet = new Set(dates.map(d => d.substring(0, 7)));
+            const months = Array.from(monthSet).sort().reverse(); 
+            const thisMonthStr = getTodayStr().substring(0, 7);
+            
+            if (months.length === 0) months.push(thisMonthStr);
+            if (!currentHistoryMonth || !months.includes(currentHistoryMonth)) {
+                currentHistoryMonth = months[0]; // 없으면 가장 최근 기록 달로 설정
+            }
+
+            const tabsContainer = document.getElementById('month-tabs');
+            tabsContainer.innerHTML = '';
+            months.forEach(m => {
+                const monthNum = parseInt(m.split('-')[1]);
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${m === currentHistoryMonth ? 'active' : ''}`;
+                btn.innerText = `${monthNum}월`;
+                btn.onclick = () => { currentHistoryMonth = m; renderHistoryScreen(); };
+                tabsContainer.appendChild(btn);
+            });
+
+            // 3. 선택된 월의 리스트 및 월간 통계 계산
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            
+            const monthDates = dates.filter(d => d.startsWith(currentHistoryMonth));
+            let monthlyTime = 0, monthlyWords = 0;
+
+            if (monthDates.length === 0) {
+                historyList.innerHTML = '<div class="history-item" style="text-align:center;">이 달에는 학습 기록이 없어요.</div>';
             } else {
-                dates.forEach(date => {
+                monthDates.forEach(date => {
                     const data = history[date];
-                    const mins = Math.floor(data.time / 60);
-                    const secs = data.time % 60;
-                    let timeStr = mins > 0 ? `${mins}분 ${secs}초` : `${secs}초`;
+                    monthlyTime += data.time || 0;
+                    monthlyWords += data.words || 0;
+                    
+                    const timeStr = formatTimeText(data.time || 0);
+                    const learnStr = (data.learn && data.learn.length > 0) ? data.learn.sort((a,b)=>a-b).join(', ') + '단계' : '없음';
+                    const quizStr = (data.quiz && data.quiz.length > 0) ? data.quiz.sort((a,b)=>a-b).join(', ') + '단계' : '없음';
                     
                     historyList.innerHTML += `
                         <div class="history-item">
                             <strong>📅 ${date}</strong>
-                            <div class="history-stat"><span>📖 ${data.words}개 학습</span><span>⏱ ${timeStr}</span></div>
+                            <div class="history-stat"><span>📖 ${data.words}개 단어</span><span>⏱ ${timeStr}</span></div>
+                            <div class="history-detail">
+                                ✔ 학습: ${learnStr} <br>
+                                ✔ 퀴즈: ${quizStr}
+                            </div>
                         </div>
                     `;
                 });
             }
-            showScreen('history-container');
+
+            const dispMonth = parseInt(currentHistoryMonth.split('-')[1]);
+            document.getElementById('monthly-title').innerText = `${dispMonth}월 누적 통계`;
+            document.getElementById('monthly-time').innerText = formatTimeText(monthlyTime);
+            document.getElementById('monthly-words').innerText = `${monthlyWords}개`;
         }
 
         /* ================= 플래시카드 로직 ================= */
@@ -433,7 +613,9 @@
 
         function updateFlashcard() {
             if (targetWords.length === 0) {
-                saveStudyHistory(originalWordsCount);
+                activeStudy = false; 
+                saveStageCompletion(originalWordsCount); 
+                
                 if (currentMode === 'wrong') {
                     showResultScreen("오답 복습 끝!", "모든 단어를 완벽하게 외웠어요!", "+0");
                 } else {
@@ -447,7 +629,6 @@
             cardInner.classList.remove('is-flipped');
             if (currentIndex >= targetWords.length) currentIndex = 0;
 
-            // 상단 진행바 업데이트
             const progressPercent = (currentIndex / targetWords.length) * 100;
             document.getElementById('learn-progress-bar').style.width = `${progressPercent}%`;
             
@@ -482,7 +663,8 @@
         /* ================= 퀴즈 로직 ================= */
         function updateQuiz() {
             if (currentIndex >= targetWords.length) {
-                saveStudyHistory(targetWords.length);
+                activeStudy = false; 
+                saveStageCompletion(targetWords.length);
                 const expGained = quizScore * 5;
                 addExp(expGained);
                 showResultScreen("퀴즈 완료!", `${targetWords.length}문제 중 ${quizScore}문제를 맞혔어요!`, `+${expGained}`);
@@ -530,7 +712,6 @@
                     if (btn.innerText === correctKo) btn.classList.add('correct');
                 }
             }
-
             setTimeout(() => { currentIndex++; updateQuiz(); }, 1200);
         }
 
