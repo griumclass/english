@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초4 영단어 마스터 (100단어)</title>
+    <style>
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            background-color: #f0f8ff; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100vh; margin: 0; 
+        }
+        
+        h2 { color: #333; margin-bottom: 5px; }
+        .progress { color: #666; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+
+        /* 단어 카드 스타일 */
+        .card-container { 
+            width: 85%; max-width: 450px; height: 350px; 
+            perspective: 1000px; margin-bottom: 25px; cursor: pointer; 
+        }
+        .card { 
+            width: 100%; height: 100%; position: relative; 
+            transition: transform 0.6s; transform-style: preserve-3d; 
+        }
+        .card.is-flipped { transform: rotateY(180deg); }
+        
+        .card-face { 
+            position: absolute; width: 100%; height: 100%; 
+            backface-visibility: hidden; border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            text-align: center; padding: 20px; box-sizing: border-box; 
+        }
+        
+        .card-front { background-color: #ffffff; }
+        .card-back { background-color: #ffe4e1; transform: rotateY(180deg); }
+        
+        .word-img {
+            width: 80%; height: 120px;
+            border-radius: 15px; margin-bottom: 15px;
+            object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .word { font-size: 3.5rem; font-weight: bold; margin-bottom: 5px; color: #ff6b6b; }
+        .meaning { font-size: 3rem; font-weight: bold; margin-bottom: 15px; color: #4ecdc4; }
+        .example { font-size: 1.3rem; color: #555; word-break: keep-all; line-height: 1.4; }
+        
+        .controls { display: flex; gap: 15px; margin-bottom: 15px; }
+        .master-controls { display: flex; gap: 15px; }
+        
+        button { 
+            padding: 15px 25px; font-size: 1.2rem; border: none; border-radius: 15px; 
+            color: white; cursor: pointer; font-weight: bold; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
+        }
+        button:active { transform: translateY(2px); box-shadow: none; }
+        
+        .btn-nav { background-color: #a5b1c2; }
+        .btn-know { background-color: #20bf6b; width: 240px; font-size: 1.1rem;}
+        
+        .audio-btn { 
+            margin-top: 10px; padding: 10px 20px; 
+            background-color: #ff9f43; font-size: 1.1rem; border-radius: 20px; 
+        }
+        
+        #success-message {
+            display: none; flex-direction: column; align-items: center; text-align: center;
+        }
+        #success-message h1 { color: #ff6b6b; font-size: 3rem; margin-bottom: 10px; }
+        .btn-restart { background-color: #4ecdc4; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <h2>도전! 영단어 100개 마스터 🚀</h2>
+        <div class="progress" id="progress-text">남은 단어: 100개</div>
+        
+        <div class="card-container" id="flashcard">
+            <div class="card" id="card-inner">
+                <div class="card-face card-front">
+                    <img id="word-image" class="word-img" src="" alt="word image">
+                    <div class="word" id="en-word">Loading...</div>
+                    <button class="audio-btn" id="audio-btn" onclick="playAudio(event)">🔊 원어민 발음</button>
+                    <p style="font-size: 0.9rem; color: #aaa; margin-top: 15px;">(카드를 터치하면 뜻이 나와요!)</p>
+                </div>
+                
+                <div class="card-face card-back">
+                    <div class="meaning" id="ko-meaning"></div>
+                    <div class="example" id="example-sentence"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-nav" onclick="prevWord()">◀ 이전</button>
+            <button class="btn-nav" onclick="nextWord()">다음 ▶</button>
+        </div>
+        <div class="master-controls">
+            <button class="btn-know" onclick="markAsKnown()">✅ 이 단어는 다 외웠어요!</button>
+        </div>
+    </div>
+
+    <div id="success-message">
+        <h1>🎉 위대한 도전을 마쳤습니다! 🎉</h1>
+        <p style="font-size: 1.5rem; color: #555;">초등학교 4학년 필수 영단어 100개를<br>모두 외웠습니다. 정말 대단해요!</p>
+        <button class="btn-restart" onclick="location.reload()">처음부터 다시 복습하기 🔄</button>
+    </div>
+
+    <script>
+        const allWords = [
+            { en: "Family", ko: "가족", ex: "I love my family." },
+            { en: "Mother", ko: "어머니", ex: "My mother is kind." },
+            { en: "Father", ko: "아버지", ex: "My father is tall." },
+            { en: "Brother", ko: "남자 형제", ex: "He is my brother." },
+            { en: "Sister", ko: "여자 형제", ex: "She is my sister." },
+            { en: "Baby", ko: "아기", ex: "The baby is sleeping." },
+            { en: "Friend", ko: "친구", ex: "He is my best friend." },
+            { en: "Teacher", ko: "선생님", ex: "Listen to the teacher." },
+            { en: "Student", ko: "학생", ex: "I am a student." },
+            { en: "Boy", ko: "소년", ex: "The boy is playing." },
+            { en: "Girl", ko: "소녀", ex: "The girl is singing." },
+            { en: "Head", ko: "머리", ex: "Touch your head." },
+            { en: "Hair", ko: "머리카락", ex: "She has long hair." },
+            { en: "Eye", ko: "눈", ex: "Open your eyes." },
+            { en: "Ear", ko: "귀", ex: "I have two ears." },
+            { en: "Nose", ko: "코", ex: "This is my nose." },
+            { en: "Mouth", ko: "입", ex: "Open your mouth." },
+            { en: "Face", ko: "얼굴", ex: "Wash your face." },
+            { en: "Hand", ko: "손", ex: "Wash your hands." },
+            { en: "Leg", ko: "다리", ex: "My legs are long." },
+            { en: "Foot", ko: "발", ex: "Stamp your feet." },
+            { en: "School", ko: "학교", ex: "I go to school." },
+            { en: "Class", ko: "수업, 반", ex: "Welcome to my class." },
+            { en: "Book", ko: "책", ex: "Read a book." },
+            { en: "Pencil", ko: "연필", ex: "I have a pencil." },
+            { en: "Eraser", ko: "지우개", ex: "Can I borrow your eraser?" },
+            { en: "Bag", ko: "가방", ex: "Put it in your bag." },
+            { en: "Desk", ko: "책상", ex: "Sit at your desk." },
+            { en: "Chair", ko: "의자", ex: "Sit on the chair." },
+            { en: "Clock", ko: "시계", ex: "Look at the clock." },
+            { en: "Window", ko: "창문", ex: "Open the window, please." },
+            { en: "Door", ko: "문", ex: "Close the door." },
+            { en: "Dog", ko: "개", ex: "The dog is barking." },
+            { en: "Cat", ko: "고양이", ex: "The cat is cute." },
+            { en: "Bird", ko: "새", ex: "The bird is flying." },
+            { en: "Fish", ko: "물고기", ex: "The fish is swimming." },
+            { en: "Bear", ko: "곰", ex: "The bear is big." },
+            { en: "Lion", ko: "사자", ex: "The lion is strong." },
+            { en: "Tiger", ko: "호랑이", ex: "The tiger is fast." },
+            { en: "Monkey", ko: "원숭이", ex: "The monkey likes bananas." },
+            { en: "Elephant", ko: "코끼리", ex: "The elephant has a long nose." },
+            { en: "Pig", ko: "돼지", ex: "The pig is eating." },
+            { en: "Water", ko: "물", ex: "Drink some water." },
+            { en: "Milk", ko: "우유", ex: "I drink milk every day." },
+            { en: "Juice", ko: "주스", ex: "I like orange juice." },
+            { en: "Bread", ko: "빵", ex: "I eat bread for breakfast." },
+            { en: "Apple", ko: "사과", ex: "I have a red apple." },
+            { en: "Banana", ko: "바나나", ex: "Monkeys like bananas." },
+            { en: "Grape", ko: "포도", ex: "These grapes are sweet." },
+            { en: "Strawberry", ko: "딸기", ex: "I love strawberries." },
+            { en: "Meat", ko: "고기", ex: "Do you like meat?" },
+            { en: "Cheese", ko: "치즈", ex: "Mice like cheese." },
+            { en: "Cake", ko: "케이크", ex: "Happy birthday! Here is a cake." },
+            { en: "Red", ko: "빨간색", ex: "An apple is red." },
+            { en: "Blue", ko: "파란색", ex: "The sky is blue." },
+            { en: "Yellow", ko: "노란색", ex: "A banana is yellow." },
+            { en: "Green", ko: "초록색", ex: "The tree is green." },
+            { en: "Black", ko: "검은색", ex: "My hair is black." },
+            { en: "White", ko: "하얀색", ex: "Snow is white." },
+            { en: "Pink", ko: "분홍색", ex: "She wears a pink dress." },
+            { en: "Sun", ko: "태양, 해", ex: "The sun is hot." },
+            { en: "Moon", ko: "달", ex: "Look at the moon." },
+            { en: "Star", ko: "별", ex: "I see a star." },
+            { en: "Sky", ko: "하늘", ex: "The sky is clear." },
+            { en: "Rain", ko: "비", ex: "It is raining." },
+            { en: "Snow", ko: "눈", ex: "It is snowing." },
+            { en: "Tree", ko: "나무", ex: "That is a tall tree." },
+            { en: "Flower", ko: "꽃", ex: "This flower is beautiful." },
+            { en: "Sea", ko: "바다", ex: "Let's go to the sea." },
+            { en: "Mountain", ko: "산", ex: "The mountain is high." },
+            { en: "Today", ko: "오늘", ex: "Today is Monday." },
+            { en: "Tomorrow", ko: "내일", ex: "See you tomorrow." },
+            { en: "Morning", ko: "아침", ex: "Good morning!" },
+            { en: "Night", ko: "밤", ex: "Good night!" },
+            { en: "Go", ko: "가다", ex: "Let's go home." },
+            { en: "Come", ko: "오다", ex: "Come here, please." },
+            { en: "Run", ko: "달리다", ex: "I can run fast." },
+            { en: "Walk", ko: "걷다", ex: "Let's walk together." },
+            { en: "Jump", ko: "점프하다", ex: "Jump up high." },
+            { en: "Sit", ko: "앉다", ex: "Sit down, please." },
+            { en: "Stand", ko: "서다", ex: "Stand up, please." },
+            { en: "Eat", ko: "먹다", ex: "I want to eat pizza." },
+            { en: "Drink", ko: "마시다", ex: "Drink your milk." },
+            { en: "Sleep", ko: "자다", ex: "It's time to sleep." },
+            { en: "Play", ko: "놀다, 경기하다", ex: "Let's play a game." },
+            { en: "Study", ko: "공부하다", ex: "I study English." },
+            { en: "Read", ko: "읽다", ex: "Read this book." },
+            { en: "Write", ko: "쓰다", ex: "Write your name." },
+            { en: "Listen", ko: "듣다", ex: "Listen to the music." },
+            { en: "See", ko: "보다", ex: "I see a bird." },
+            { en: "Help", ko: "돕다", ex: "Can you help me?" },
+            { en: "Wash", ko: "씻다", ex: "Wash your face." },
+            { en: "Big", ko: "큰", ex: "That is a big elephant." },
+            { en: "Small", ko: "작은", ex: "This is a small mouse." },
+            { en: "Tall", ko: "키가 큰", ex: "He is very tall." },
+            { en: "Short", ko: "짧은, 키가 작은", ex: "The pencil is short." },
+            { en: "Long", ko: "긴", ex: "She has long hair." },
+            { en: "Good", ko: "좋은", ex: "Have a good day." },
+            { en: "Bad", ko: "나쁜", ex: "That is a bad idea." },
+            { en: "Happy", ko: "행복한", ex: "I am happy today." },
+            { en: "Sad", ko: "슬픈", ex: "Why are you sad?" },
+            { en: "Angry", ko: "화난", ex: "He is very angry." },
+            { en: "Hot", ko: "뜨거운, 더운", ex: "The weather is hot." },
+            { en: "Cold", ko: "차가운, 추운", ex: "It is cold outside." },
+            { en: "Hungry", ko: "배고픈", ex: "I am hungry." },
+            { en: "Fast", ko: "빠른", ex: "The car is fast." },
+            { en: "Cute", ko: "귀여운", ex: "The baby is cute." }
+        ];
+
+        let learningWords = [...allWords];
+        let currentIndex = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        shuffleArray(learningWords);
+
+        const cardInner = document.getElementById('card-inner');
+        const flashcard = document.getElementById('flashcard');
+        const progressText = document.getElementById('progress-text');
+        const wordImage = document.getElementById('word-image');
+        
+        flashcard.addEventListener('click', () => {
+            cardInner.classList.toggle('is-flipped');
+        });
+
+        function updateCard() {
+            if (learningWords.length === 0) {
+                document.getElementById('app-container').style.display = 'none';
+                document.getElementById('success-message').style.display = 'flex';
+                return;
+            }
+
+            cardInner.classList.remove('is-flipped');
+            
+            if (currentIndex >= learningWords.length) {
+                currentIndex = 0;
+            }
+
+            progressText.innerText = `남은 단어: ${learningWords.length}개 (현재: ${currentIndex + 1}번째)`;
+            
+            setTimeout(() => {
+                const currentWordObj = learningWords[currentIndex];
+                
+                wordImage.src = `https://placehold.co/400x150/FFE4E1/FF6B6B?text=${currentWordObj.en}`;
+                wordImage.alt = currentWordObj.en + " image";
+
+                document.getElementById('en-word').innerText = currentWordObj.en;
+                document.getElementById('ko-meaning').innerText = currentWordObj.ko;
+                document.getElementById('example-sentence').innerText = currentWordObj.ex;
+            }, 150); 
+        }
+
+        function nextWord() {
+            if (learningWords.length === 0) return;
+            if (currentIndex < learningWords.length - 1) {
+                currentIndex++;
+            } else {
+                alert("한 바퀴 다 돌았습니다! 모르는 단어를 다시 섞어서 보여줍니다.");
+                shuffleArray(learningWords);
+                currentIndex = 0;
+            }
+            updateCard();
+        }
+
+        function prevWord() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCard();
+            }
+        }
+
+        function markAsKnown() {
+            learningWords.splice(currentIndex, 1);
+            updateCard();
+        }
+
+        function playAudio(event) {
+            event.stopPropagation(); 
+            const text = learningWords[currentIndex].en;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US'; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        updateCard();
+    </script>
+</body>
+</html>
